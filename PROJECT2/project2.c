@@ -7,6 +7,16 @@ typedef struct {
     int id;
 } packet;
 
+typedef struct _node {
+    struct _node *next;
+    char *text;
+    int lineNumber;
+} node;
+
+typedef struct {
+    node *head;
+} queue;
+
 void *threadRoutine(void *arg) {
     packet *info = (packet*) arg;
 
@@ -24,9 +34,18 @@ int main(int argc, char **argv) {
     // initialize main thread vars
     int i;
     int numConsumers = atoi(argv[1]);
+    pthread_t *threadList;
+    queue *textQueue;
+    node *firstNode;
+
+    textQueue = malloc(sizeof(queue));
+    firstNode = malloc(sizeof(node));
+    textQueue->head = firstNode;
 
 
-    pthread_t *threadList = malloc(numConsumers * sizeof(pthread_t));
+
+
+    threadList = malloc(numConsumers * sizeof(pthread_t));
     // packet    *threadInfo[numConsumers];
  
     for(i = 0; i < numConsumers; i++) {
@@ -34,6 +53,7 @@ int main(int argc, char **argv) {
         info->id = i;
         pthread_create(&threadList[i], NULL, threadRoutine, info);
     } 
+
 
 
     // wait for all threads to terminate
