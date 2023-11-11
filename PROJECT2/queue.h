@@ -12,7 +12,9 @@ typedef struct {
 } queue;
 
 queue* newQueue();
-node* newNode();
-void appendQueue(queue* q, node* n);
+node* newNode(int lineNo, char* str);
+node* getTailNode(queue* q);
+node* popNode(queue* q);
+void appendNode(queue* q, node* n);
 
 #endif

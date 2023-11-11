@@ -14,6 +14,8 @@ void *threadRoutine(void *arg) {
 
     printf("Thread %d :3\n", info->id);
 
+
+    free(info);
     return NULL;
 }
 
@@ -30,12 +32,15 @@ int main(int argc, char **argv) {
     queue *textQueue;
 
     textQueue = newQueue();
-    appendQueue(textQueue, newNode(1, "word word word 1"));
-    appendQueue(textQueue, newNode(2, "word word word 2"));
+    appendNode(textQueue, newNode(1, "word word word 1"));
+    appendNode(textQueue, newNode(2, "word word word 2"));
+    appendNode(textQueue, newNode(3, "word word word 5"));
+    appendNode(textQueue, newNode(4, "word word word 5"));
 
-    textQueue->head->lineNumber = 5;
+    printf("%d aaaa \n\n", popNode(textQueue) -> lineNumber);
 
-    printf("\n%d\n\n", textQueue->head->next->lineNumber);
+
+    //printf("\n%d\n\n", textQueue -> head -> lineNumber);
 
     threadList = malloc(numConsumers * sizeof(pthread_t));
     // packet    *threadInfo[numConsumers];
@@ -52,5 +57,10 @@ int main(int argc, char **argv) {
     for(i = 0; i < numConsumers; i++) {
         pthread_join(threadList[i], NULL);
     }
+
+
+    // free memory ~
+    free(textQueue);
+    free(threadList);
 
 }
