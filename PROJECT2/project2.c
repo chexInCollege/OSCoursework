@@ -2,21 +2,13 @@
 #include <stdlib.h>
 #include <string.h>
 #include <pthread.h>
+#include "queue.h"
 
 typedef struct {
     int id;
 } packet;
 
-typedef struct _node {
-    struct _node *next;
-    char *text;
-    int lineNumber;
-} node;
-
-typedef struct {
-    node *head;
-} queue;
-
+ 
 void *threadRoutine(void *arg) {
     packet *info = (packet*) arg;
 
@@ -36,14 +28,14 @@ int main(int argc, char **argv) {
     int numConsumers = atoi(argv[1]);
     pthread_t *threadList;
     queue *textQueue;
-    node *firstNode;
 
-    textQueue = malloc(sizeof(queue));
-    firstNode = malloc(sizeof(node));
-    textQueue->head = firstNode;
+    textQueue = newQueue();
+    appendQueue(textQueue, newNode(1, "word word word 1"));
+    appendQueue(textQueue, newNode(2, "word word word 2"));
 
+    textQueue->head->lineNumber = 5;
 
-
+    printf("\n%d\n\n", textQueue->head->next->lineNumber);
 
     threadList = malloc(numConsumers * sizeof(pthread_t));
     // packet    *threadInfo[numConsumers];
