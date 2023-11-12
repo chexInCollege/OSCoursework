@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <pthread.h>
-#include <time.h>
+#include <unistd.h>
 #include "queue.h"
 
 typedef struct {
@@ -13,20 +13,33 @@ typedef struct {
 int stop = 0;
  
 void *threadRoutine(void *arg) {
+    node* poppedNode;
     packet *info = (packet*) arg;
+    int i, wc;
     int threadID = info -> id;
     queue* q = info -> q;
-    //printf("Thread %d is waiting...\n", threadID);
-
-    //printf("Thread %d :3\n", info->id);
 
     while(!stop || getTailNode(q)) {
-        while(!getTailNode(q)) usleep(1000);
-        //printf("WAITING...\n");
-        //printf("Thread %d is waiting...\n", threadID);
-        node* poppedNode = popNode(q);
-        //printf("Thread %d got line %d! (%d)\n", threadID, poppedNode -> lineNumber, q -> count);
-        //printf("Thread %d just got line %d\n", threadID, poppedNode -> lineNumber);        
+        while(!getTailNode(q) && !stop) usleep(1000);
+
+        if(poppedNode = popNode(q)) {
+            // process the newly acquired node
+            //printf("Thread %d got line %d! (%d)\n", threadID, poppedNode -> lineNumber, q -> wordCount);
+            
+            wc = 1; // 1 for EoL
+
+            for(i = 0; i < poppedNode->length; i++) {
+                if(poppedNode->text[i] == 32) {
+                    wc++;
+                }
+            }
+            //printf("\n");
+            printf("Thread %d got line %d! (%d words)\n", threadID, poppedNode -> lineNumber, wc);
+            //for(int i = 0; i < 100000; i++) {int x = i * i * i;}
+            usleep(100);
+        } else {
+            printf("Thread %d skipped cycle!\n", threadID);
+        }
     }
     
 
@@ -50,7 +63,7 @@ int main(int argc, char **argv) {
     size_t read;
     int currentLine;
 
-    printf("\n%d\n\n", textQueue -> lock);
+    printf("\n%d\n\n", textQueue -> popLock);
 
     threadList = malloc(numConsumers * sizeof(pthread_t));
     // packet    *threadInfo[numConsumers];
@@ -66,8 +79,9 @@ int main(int argc, char **argv) {
     // Start processing stdin
     currentLine = 1;
     while ((read = getline(&line, &len, stdin)) != -1) {
-        node* lineNode = newNode(currentLine++, read, line);
-        appendNode(textQueue, lineNode);
+        char* lineText = malloc(read * sizeof(char));
+        strcpy(lineText, line);
+        appendNode(textQueue, newNode(currentLine++, read, lineText));
     }
 
     stop = 1;
@@ -79,7 +93,7 @@ int main(int argc, char **argv) {
         pthread_join(threadList[i], NULL);
     }
 
-    printf("%d\n", textQueue -> count);
+    printf("\n%d\n", textQueue -> wordCount);
 
 
     // free memory ~

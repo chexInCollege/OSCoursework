@@ -12,8 +12,9 @@ typedef struct _node {
 
 typedef struct {
     node *head;
-    pthread_mutex_t lock;
-    int count;
+    pthread_mutex_t popLock;
+    pthread_mutex_t countLock;
+    int wordCount;
 } queue;
 
 queue* newQueue();

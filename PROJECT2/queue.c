@@ -6,8 +6,9 @@
 queue* newQueue() {
     queue *q = malloc(sizeof(queue));
     q -> head = NULL;
-    q -> count = 0;
-    pthread_mutex_init(&(q -> lock), NULL);
+    q -> wordCount = 0;
+    pthread_mutex_init(&(q -> popLock), NULL);
+    pthread_mutex_init(&(q -> countLock), NULL);
     return q;
 }
 
@@ -34,18 +35,22 @@ node* getTailNode(queue* q) {
 
 // removes the front element from the queue and returns the popped node
 node* popNode(queue* q) {
-    node *oldHead = NULL;
+    node *oldHead;
     if(q -> head) {
-        pthread_mutex_lock(&(q->lock));
-        printf("mutex locked\n");
+        
+        pthread_mutex_lock(&(q->popLock));
+        //printf("mutex locked\n");
         oldHead = q -> head;
         //printf("got old head\n");
-        node *newHead = oldHead -> next;
-        //printf("mutex got new head\n");
-        q -> head = newHead;
+        node *newHead = oldHead ? oldHead -> next : NULL;
+        //printf("got new head\n");
+        q -> head = newHead ? newHead : NULL;
         //printf("set new head\n");
-        pthread_mutex_unlock(&(q->lock));
-        printf("mutex unlocked\n");
+        q -> wordCount++;
+        pthread_mutex_unlock(&(q->popLock));
+        //printf("mutex unlocked\n");
+    } else { // send a special end-of-queue node
+        oldHead = NULL;
     }
     return oldHead;
 }
@@ -57,4 +62,3 @@ void appendNode(queue* q, node* n) {
     else                     // hard mode: find tail node and append to the end
         getTailNode(q) -> next = n;
 }
-
