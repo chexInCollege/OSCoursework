@@ -19,6 +19,7 @@ node* newNode(int lineNo, int length, char* str) {
     n -> next = NULL;
     n -> lineNumber = lineNo;
     n -> length = length;
+    n -> seen = 0;
     return n;
 } 
 
@@ -38,7 +39,7 @@ node* popNode(queue* q) {
     node *oldHead;
     if(q -> head) {
         
-        pthread_mutex_lock(&(q->popLock));
+        // pthread_mutex_lock(&(q->popLock));
         //printf("mutex locked\n");
         oldHead = q -> head;
         //printf("got old head\n");
@@ -47,7 +48,7 @@ node* popNode(queue* q) {
         q -> head = newHead ? newHead : NULL;
         //printf("set new head\n");
         q -> wordCount++;
-        pthread_mutex_unlock(&(q->popLock));
+        // pthread_mutex_unlock(&(q->popLock));
         //printf("mutex unlocked\n");
     } else { // send a special end-of-queue node
         oldHead = NULL;
@@ -57,8 +58,10 @@ node* popNode(queue* q) {
 
 // adds a new node to the end of a queue
 void appendNode(queue* q, node* n) {
+    //pthread_mutex_lock(&(q->popLock));
     if(q -> head == NULL)    // easy mode: add node as head
         q -> head = n;
     else                     // hard mode: find tail node and append to the end
         getTailNode(q) -> next = n;
+    //pthread_mutex_unlock(&(q->popLock));
 }

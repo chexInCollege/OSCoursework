@@ -2,12 +2,14 @@
 #define FUNCTIONS_QUEUE_INCLUDED
 
 #include <pthread.h>
+#include <stdatomic.h>
 
 typedef struct _node {
     struct _node *next;
     char *text;
     int length;
     int lineNumber;
+    atomic_int seen;
 } node;
 
 typedef struct {

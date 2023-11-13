@@ -21,24 +21,28 @@ void *threadRoutine(void *arg) {
 
     while(!stop || getTailNode(q)) {
         while(!getTailNode(q) && !stop) usleep(1000);
-
-        if(poppedNode = popNode(q)) {
+        pthread_mutex_lock(&(q->popLock));
+        if((poppedNode = popNode(q))) {
+            pthread_mutex_unlock(&(q->popLock));
             // process the newly acquired node
             //printf("Thread %d got line %d! (%d)\n", threadID, poppedNode -> lineNumber, q -> wordCount);
             
             wc = 1; // 1 for EoL
 
             for(i = 0; i < poppedNode->length; i++) {
-                if(poppedNode->text[i] == 32) {
+                if(poppedNode->text[i] == ' ') {
                     wc++;
                 }
             }
             //printf("\n");
             printf("Thread %d got line %d! (%d words)\n", threadID, poppedNode -> lineNumber, wc);
             //for(int i = 0; i < 100000; i++) {int x = i * i * i;}
+            poppedNode->seen = 1;
+            //free(poppedNode);
             usleep(100);
         } else {
             printf("Thread %d skipped cycle!\n", threadID);
+            pthread_mutex_unlock(&(q->popLock));
         }
     }
     
@@ -63,7 +67,6 @@ int main(int argc, char **argv) {
     size_t read;
     int currentLine;
 
-    printf("\n%d\n\n", textQueue -> popLock);
 
     threadList = malloc(numConsumers * sizeof(pthread_t));
     // packet    *threadInfo[numConsumers];
@@ -79,13 +82,15 @@ int main(int argc, char **argv) {
     // Start processing stdin
     currentLine = 1;
     while ((read = getline(&line, &len, stdin)) != -1) {
-        char* lineText = malloc(read * sizeof(char));
+        char* lineText = malloc(read * sizeof(char)+1);
         strcpy(lineText, line);
+        pthread_mutex_lock(&(textQueue->popLock));
         appendNode(textQueue, newNode(currentLine++, read, lineText));
+        pthread_mutex_unlock(&(textQueue->popLock));
     }
 
-    stop = 1;
-
+    stop = 1; 
+ 
     printf("\n\nmain finished\n\n");
 
     // wait for all threads to terminate
