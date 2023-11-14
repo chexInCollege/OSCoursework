@@ -1,3 +1,7 @@
+// CSCI 340-01 - Project 2
+// Alex Groves & Andreas Dilling
+// A program which demonstrates thread synchronization via a multithreaded word counter.
+
 #include <stdio.h>      // i/o
 #include <stdlib.h>     // malloc
 #include <string.h>     // strcpy
