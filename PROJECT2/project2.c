@@ -1,15 +1,15 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <pthread.h>
-#include <unistd.h>
-#include "queue.h"
+#include <stdio.h>      // i/o
+#include <stdlib.h>     // malloc
+#include <string.h>     // strcpy
+#include <pthread.h>    // pthreads
+#include <unistd.h>     // usleep()
+#include "queue.h"      // custom queue library
 
 // A struct passed into each thread to facilitate communication with main()
 typedef struct {
-    int id;
-    queue* q;
-    int wc;
+    int id;     // represents current thread ID
+    queue* q;   // pointer to the main queue
+    int wc;     // word count for current thread
 } packet;
 
 // setting to 1 will signal to threads that the queue is done filling up
@@ -17,25 +17,26 @@ int stop = 0;
  
 
 void *threadRoutine(void *arg) {
-    // initialize ..
-    node* poppedNode;              
+    // initialize...
+    node* poppedNode;               // used to hold nodes popped from the queue          
     packet *info = (packet*) arg;   // typecast arg to packet
-    int i;
+    queue* q = info -> q;           // queue pointer
     int threadID = info -> id;
-    queue* q = info -> q;
+    int i;
 
     // node seeking routine
     while(!stop || getTailNode(q)) {
-        // Wait for an available node
+        // wait for an available node
         while(!getTailNode(q) && !stop) usleep(100);
 
-        pthread_mutex_lock(&(q->popLock)); // lock for popNode()
-        if(!(poppedNode = popNode(q))) { // no node available; skip
-            pthread_mutex_unlock(&(q->popLock));
-        } else {
-            pthread_mutex_unlock(&(q->popLock));
+        // lock the mutex to alter the queue
+        pthread_mutex_lock(&(q->popLock));
+        poppedNode = popNode(q);
+        pthread_mutex_unlock(&(q->popLock));
+
+        if(poppedNode) {
             // count the words for the found node
-            if(poppedNode->length > 1) {
+            if(poppedNode->length > 1) { // make sure the line has content
                 info->wc++; // 1 for EoL
 
                 i = 0;
@@ -58,10 +59,9 @@ void *threadRoutine(void *arg) {
             
         }
     }
-    
-
     pthread_exit(NULL);
 }
+
 
 int main(int argc, char **argv) {
     // command check
@@ -94,7 +94,6 @@ int main(int argc, char **argv) {
         pthread_create(&threadList[i], NULL, threadRoutine, info);
     } 
 
-
     // Start processing stdin
     currentLine = 1;
     while ((read = getline(&line, &len, stdin)) != -1) {
@@ -102,18 +101,17 @@ int main(int argc, char **argv) {
         char* lineText = malloc((read+1) * sizeof(char));
         strcpy(lineText, line);
 
+        // lock the mutex to alter the queue
         pthread_mutex_lock(&(textQueue->popLock));
-        appendNode(textQueue, newNode(currentLine++, read, lineText));
+        pushNode(textQueue, newNode(currentLine++, read, lineText));
         pthread_mutex_unlock(&(textQueue->popLock));
     }
 
     // all lines extracted; signal threads that we're done
     stop = 1; 
- 
-
-    finalWordCount = 0;
 
     // wait for all threads to terminate, collect their word counts
+    finalWordCount = 0;
     for(i = 0; i < numConsumers; i++) {
         pthread_join(threadList[i], NULL);
         finalWordCount += packetList[i] -> wc;
@@ -123,8 +121,6 @@ int main(int argc, char **argv) {
     // final output
     printf("--------------------------------------------------");
     printf("\nFINAL COUNT:  %d  words in  %d  lines\n", finalWordCount, currentLine-1);
-
-    
 
     // free memory ~
     free(textQueue);
