@@ -9,7 +9,6 @@ typedef struct _node {
     char *text;
     int length;
     int lineNumber;
-    atomic_int seen;
 } node;
 
 typedef struct {

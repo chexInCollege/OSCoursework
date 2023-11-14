@@ -19,7 +19,6 @@ node* newNode(int lineNo, int length, char* str) {
     n -> next = NULL;
     n -> lineNumber = lineNo;
     n -> length = length;
-    n -> seen = 0;
     return n;
 } 
 
