@@ -2,7 +2,6 @@
 #define FUNCTIONS_QUEUE_INCLUDED
 
 #include <pthread.h>
-#include <stdatomic.h>
 
 typedef struct _node {
     struct _node *next;
