@@ -78,10 +78,9 @@ int main(int argc, char **argv) {
     int numConsumers = atoi(argv[1]);
     char *line = NULL;
     queue *textQueue = newQueue();
-    size_t len = 0;
+    size_t len, read;
     pthread_t *threadList;
     packet **packetList;
-    size_t read;
     int currentLine, finalWordCount, i;
 
     // a couple arrays for our thread communication medium
